@@ -1,4 +1,4 @@
-service:
+services:
   db:
     image: postgres:latest
     container_name: my_db_prisma

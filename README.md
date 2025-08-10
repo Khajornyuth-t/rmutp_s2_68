@@ -2,13 +2,9 @@ Python Prisma
 
 Khajornyuth Tonpuban
 
-## Create env.simple
+## Using it
+
 ```bash
-    ##Database
-    vi env.simple
+    cp env.simple .env
+    docker compose -f db.yml up -d
 ```
-###Database
-    DATABASE_PORT=modified
-    DATABASE_NAME=modified
-    DATABASE_PASSWORD=modified
-    DATABASE_USER=modified
