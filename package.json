@@ -1,9 +1,7 @@
 {
   "scripts": {
     "build": "tsc",
-    "start": "node dist/server.js",
-    "dev": "tsc && node dist/server.js",
-    "watch": "tsc --watch & nodemon dist/server.js"
+    "dev": "node dist/server.js"
   },
   "dependencies": {
     "@hono/node-server": "^1.18.2",
