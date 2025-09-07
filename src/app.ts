@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { PrismaClient } from "../generated/prisma";
+import * as crypto from 'crypto';
 
 const app = new Hono();
 const prisma = new PrismaClient();
@@ -15,6 +16,11 @@ interface CreateProfileRequest {
 interface ViewProfileRequest {
   mobile: string;
   password: string;
+}
+
+// Helper function สำหรับ hash password
+function hashPassword(password: string): string {
+  return crypto.createHash('sha256').update(password).digest('hex');
 }
 
 // Original routes
@@ -86,13 +92,18 @@ app.post("/profiles", async (c) => {
       }, 409);
     }
 
+    // Hash password ก่อนบันทึก
+    const hashedPassword = hashPassword(body.password);
+    console.log(`Original password: ${body.password}`);
+    console.log(`Hashed password: ${hashedPassword}`);
+
     // สร้าง profile ใหม่ (id จะ generate เป็น uuid อัตโนมัติ)
     const newProfile = await prisma.profile.create({
       data: {
         username: body.username,
         mobile: body.mobile,
         cardId: body.cardId,
-        password: body.password // ในการใช้งานจริงควร hash password
+        password: hashedPassword // บันทึก hashed password
       },
       select: {
         id: true,
@@ -131,31 +142,39 @@ app.post("/profiles/view", async (c) => {
       }, 400);
     }
 
-    // ค้นหา profile ด้วย mobile และ password
-    const profile = await prisma.profile.findFirst({
-      where: {
-        mobile: body.mobile,
-        password: body.password
-      },
-      select: {
-        id: true,
-        username: true,
-        mobile: true,
-        cardId: true
-        // ไม่ select password เพื่อไม่ให้ return ใน response
-      }
+    // ค้นหา profile ด้วย mobile
+    const profile = await prisma.profile.findUnique({
+      where: { mobile: body.mobile }
     });
 
     if (!profile) {
       return c.json({
         success: false,
-        error: "Invalid mobile number or password"
+        error: "User not found"
+      }, 404);
+    }
+
+    // Hash password ที่ user ป้อนเข้ามาแล้วเปรียบเทียบ
+    const hashedInputPassword = hashPassword(body.password);
+
+    if (profile.password !== hashedInputPassword) {
+      return c.json({
+        success: false,
+        error: "Invalid password"
       }, 401);
     }
 
+    // Password ถูกต้อง - return ข้อมูล profile
+    const profileData = {
+      id: profile.id,
+      username: profile.username,
+      mobile: profile.mobile,
+      cardId: profile.cardId
+    };
+
     return c.json({
       success: true,
-      data: profile
+      data: profileData
     });
 
   } catch (error) {
@@ -163,6 +182,64 @@ app.post("/profiles/view", async (c) => {
     return c.json({
       success: false,
       error: "Failed to retrieve profile"
+    }, 500);
+  }
+});
+
+// Login - ด้วย username + password
+app.post("/profiles/login", async (c) => {
+  try {
+    const body: any = await c.req.json();
+    
+    // Validation
+    if (!body.username || !body.password) {
+      return c.json({
+        success: false,
+        error: "Username and password are required"
+      }, 400);
+    }
+
+    // ค้นหา profile ด้วย username
+    const profile = await prisma.profile.findUnique({
+      where: { username: body.username }
+    });
+
+    if (!profile) {
+      return c.json({
+        success: false,
+        error: "Invalid credentials"
+      }, 401);
+    }
+
+    // Hash password ที่ user ป้อนเข้ามาแล้วเปรียบเทียบ
+    const hashedInputPassword = hashPassword(body.password);
+
+    if (profile.password !== hashedInputPassword) {
+      return c.json({
+        success: false,
+        error: "Invalid credentials"
+      }, 401);
+    }
+
+    // Login สำเร็จ - return ข้อมูล profile
+    const profileData = {
+      id: profile.id,
+      username: profile.username,
+      mobile: profile.mobile,
+      cardId: profile.cardId
+    };
+
+    return c.json({
+      success: true,
+      data: profileData,
+      message: "Login successful"
+    });
+
+  } catch (error) {
+    console.error('Error during login:', error);
+    return c.json({
+      success: false,
+      error: "Login failed"
     }, 500);
   }
 });
