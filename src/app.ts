@@ -1,8 +1,8 @@
 import { Hono } from "hono";
 import { PrismaClient } from "../generated/prisma";
 import * as crypto from 'crypto';
-import { encode, decode } from "punycode";
-  
+import { encode, decode } from "./security";
+
 
 const app = new Hono();
 const prisma = new PrismaClient();
@@ -283,6 +283,19 @@ process.on('SIGTERM', async () => {
 process.on('SIGINT', async () => {
   await prisma.$disconnect();
   process.exit(0);
+});
+
+app.post("/encode", async (c) => {
+    return c.json({
+        message: "encode completed",
+        func: encode(),
+    });
+});
+app.post("/decode", async (c) => {
+    return c.json({
+        message: "decode completed",
+        func: decode(),
+    });
 });
 
 export default app;
