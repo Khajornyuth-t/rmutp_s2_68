@@ -13,40 +13,10 @@ Accept: text/plain
 GET {{baseUrl}}/profile
 Accept: text/plain
 
-### ========================================
-### CREATE PROFILE TESTS (POST /profiles)
-### ========================================
-
-### 1. Create new profile - Success case
-POST {{baseUrl}}/profiles
+#read user
+POST {{baseUrl}}/decode
 Content-Type: application/json
 
 {
-  "username": "TestName1",
-  "mobile": "0890000001",
-  "cardId": "1340100000001",
-  "password": "mypassword123"
-}
-
-### 2. Create new profile - Success case
-POST {{baseUrl}}/profiles
-Content-Type: application/json
-
-{
-  "username": "TestName2",
-  "mobile": "0890000002",
-  "cardId": "1340100000002",
-  "password": "mypassword123"
-}
-
-### 3.Get profile by ID
-GET {{baseUrl}}/profiles/9f8090c6-bc82-4a6a-b1d6-a79762f42151
-
-### 4. Login with correct credentials by username + password - Success case
-POST {{baseUrl}}/profiles/login
-Content-Type: application/json
-
-{
-    "username": "TestName1",
-    "password": "mypassword123"
+  "id": "43b62dca-a5cb-485b-9800-166dd4bda377"
 }
