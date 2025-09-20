@@ -13,10 +13,221 @@ Accept: text/plain
 GET {{baseUrl}}/profile
 Accept: text/plain
 
-#read user
+###
+# 4. สร้าง testuser1 ด้วย POST /encode (เข้ารหัส)
+POST {{baseUrl}}/encode
+Content-Type: application/json
+
+{
+  "username": "testuser1",
+  "mobile": "0812345678",
+  "cardId": "1234567890123",
+  "password": "password123"
+}
+
+###
+# 5. สร้าง testuser2 ด้วย POST /encode (เข้ารหัส) 
+POST {{baseUrl}}/encode
+Content-Type: application/json
+
+{
+  "username": "testuser2",
+  "mobile": "0887654321",
+  "cardId": "9876543210987",
+  "password": "password456"
+}
+
+###
+# 6. สร้าง testuser3 ด้วย POST /profiles (ปกติ - ไม่เข้ารหัส)
+POST {{baseUrl}}/profiles
+Content-Type: application/json
+
+{
+  "username": "testuser3",
+  "mobile": "0823456789",
+  "cardId": "1357924680246",
+  "password": "password789"
+}
+
+###
+# 7. ดูข้อมูล Profiles ทั้งหมด (หลังสร้าง 3 users)
+GET {{baseUrl}}/profiles
+
+### ===== ทดสอบ Error Cases =====
+
+###
+# 8. Error: Username ซ้ำ
+POST {{baseUrl}}/encode
+Content-Type: application/json
+
+{
+  "username": "testuser1",
+  "mobile": "0811111111", 
+  "cardId": "1111111111111",
+  "password": "newpassword"
+}
+
+###
+# 9. Error: Mobile ซ้ำ
+POST {{baseUrl}}/encode
+Content-Type: application/json
+
+{
+  "username": "newuser1",
+  "mobile": "0812345678",
+  "cardId": "2222222222222", 
+  "password": "newpassword"
+}
+
+###
+# 10. Error: CardId ซ้ำ
+POST {{baseUrl}}/encode
+Content-Type: application/json
+
+{
+  "username": "newuser2",
+  "mobile": "0822222222",
+  "cardId": "1234567890123",
+  "password": "newpassword"
+}
+
+###
+# 11. Error: Mobile น้อยกว่า 10 หลัก
+POST {{baseUrl}}/encode
+Content-Type: application/json
+
+{
+  "username": "erroruser1",
+  "mobile": "081234567",
+  "cardId": "3333333333333",
+  "password": "password"
+}
+
+###
+# 12. Error: Mobile มากกว่า 10 หลัก
+POST {{baseUrl}}/encode
+Content-Type: application/json
+
+{
+  "username": "erroruser2", 
+  "mobile": "08123456789",
+  "cardId": "4444444444444",
+  "password": "password"
+}
+
+###
+# 13. Error: CardId น้อยกว่า 13 หลัก
+POST {{baseUrl}}/encode
+Content-Type: application/json
+
+{
+  "username": "erroruser3",
+  "mobile": "0833333333",
+  "cardId": "123456789012",
+  "password": "password"
+}
+
+###
+# 14. Error: CardId มากกว่า 13 หลัก
+POST {{baseUrl}}/encode
+Content-Type: application/json
+
+{
+  "username": "erroruser4",
+  "mobile": "0844444444", 
+  "cardId": "12345678901234",
+  "password": "password"
+}
+
+###
+# 15. Error: ข้อมูลไม่ครบ
+POST {{baseUrl}}/encode
+Content-Type: application/json
+
+{
+  "username": "incompleteuser",
+  "mobile": "0855555555"
+}
+
+### ===== ทดสอบการอ่านข้อมูล =====
+
+###
+# 16. ดู Profile ตาม ID (ใส่ ID จริงจาก step 7)
+GET {{baseUrl}}/profile/384b6e06-8ee7-4aa7-81a9-61c7fe9b7379
+
+###
+# 17. ถอดรหัส Profile (ใส่ ID ของ testuser1 หรือ testuser2)
 POST {{baseUrl}}/decode
 Content-Type: application/json
 
 {
-  "id": "43b62dca-a5cb-485b-9800-166dd4bda377"
+  "id": "b455863d-0c7b-4e88-9c6d-c09b3cfa4a58"
+}
+
+###
+# 18. ถอดรหัส Profile ที่ไม่มี
+POST {{baseUrl}}/decode
+Content-Type: application/json
+
+{
+  "id": "non-existent-id"
+}
+
+###
+# 19. ถอดรหัสโดยไม่ใส่ ID
+POST {{baseUrl}}/decode
+Content-Type: application/json
+
+{}
+
+### ===== ทดสอบ Login และ View =====
+
+###
+# 20. Login testuser1 (encrypted user)
+POST {{baseUrl}}/profiles/login
+Content-Type: application/json
+
+{
+  "username": "testuser1",
+  "password": "password123"
+}
+
+###
+# 21. Login testuser3 (plain text user)  
+POST {{baseUrl}}/profiles/login
+Content-Type: application/json
+
+{
+  "username": "testuser3",
+  "password": "password789"
+}
+
+###
+# 22. View Profile ด้วย mobile + password (testuser1)
+POST {{baseUrl}}/profiles/view
+Content-Type: application/json
+
+{
+  "mobile": "0812345678",
+  "password": "password123"
+}
+
+###
+# 23. View Profile ด้วย mobile + password (testuser3)
+POST {{baseUrl}}/profiles/view  
+Content-Type: application/json
+
+{
+  "mobile": "0823456789",
+  "password": "password789"
+}
+
+###
+# 24. Login ด้วยข้อมูลผิด
+POST {{baseUrl}}/profiles/login
+Content-Type: application/json
+
+{
+  "username": "testuser1",
+  "password": "wrongpassword"
 }

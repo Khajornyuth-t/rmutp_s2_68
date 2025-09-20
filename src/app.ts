@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import { PrismaClient } from "../generated/prisma";
 import * as crypto from 'crypto';
 //import { encode, decode } from "./security";
-import { encryptProfile, decryptProfile } from "./algorithm";
+import { encryptProfile, decryptProfile, encryptData } from "./algorithm";
 
 const app = new Hono();
 const prisma = new PrismaClient();
@@ -145,9 +145,18 @@ app.post("/profiles/view", async (c) => {
     }
 
     // ค้นหา profile ด้วย mobile
-    const profile = await prisma.profile.findUnique({
+    /*const profile = await prisma.profile.findUnique({
       where: { mobile: body.mobile }
-    });
+    });*/
+    let profile = await prisma.profile.findUnique({
+      where: {mobile: body.mobile}
+    })
+    if (!profile) {
+      const encryptedMobile = encryptData(body.mobile);
+      profile = await prisma.profile.findUnique({
+      where: { mobile: encryptedMobile }
+      });
+    }
 
     if (!profile) {
       return c.json({
@@ -202,9 +211,19 @@ app.post("/profiles/login", async (c) => {
     }
 
     // ค้นหา profile ด้วย username
-    const profile = await prisma.profile.findUnique({
+    /*const profile = await prisma.profile.findUnique({
       where: { username: body.username }
-    });
+    });*/
+    let profile = await prisma.profile.findUnique({
+      where: {username: body.username}
+    })
+
+    if(!profile){
+      const encryptedUsername = encryptData(body.username);
+      profile = await prisma.profile.findUnique({
+        where: {username: encryptedUsername}
+      })
+    }
 
     if (!profile) {
       return c.json({
